@@ -1,0 +1,59 @@
+Metadata-Version: 2.4
+Name: resume-filter
+Version: 0.1.0
+Summary: Resumable resume OCR using SiliconFlow DeepSeek-OCR
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: httpx<1,>=0.27
+Requires-Dist: PyMuPDF<2,>=1.24
+Requires-Dist: python-dotenv<2,>=1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
+
+# ResumeFilter
+
+当前阶段只实现可断点续传的 PDF OCR。脚本会在本地把 PDF 逐页渲染为图片，并直接请求
+SiliconFlow 的 `deepseek-ai/DeepSeek-OCR`，不会请求或依赖 OCR Gateway。
+
+## 安装
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -e "."
+```
+
+复制 `.env.example` 为 `.env` 并填写配置，程序会在当前工作目录自动加载该文件。也可以直接设置进程环境变量：
+
+```powershell
+$env:SILICONFLOW_API_KEY = "your-key"
+$env:SILICONFLOW_BASE_URL = "https://api.siliconflow.cn/v1"
+```
+
+默认从 `resumes/` 递归读取 PDF，并写入 `ocr_results/`：
+
+```powershell
+.\.venv\Scripts\resume-filter-ocr.exe
+```
+
+也可以显式指定单个 PDF、输入目录和输出目录：
+
+```powershell
+.\.venv\Scripts\resume-filter-ocr.exe .\incoming --output .\ocr_results
+```
+
+## 断点续传
+
+- 每个成功页面立即原子写入 `ocr_results/.checkpoints/`。
+- 只有所有页面成功后，才原子生成最终的 `<原文件名>.md`。
+- `<原文件名>.ocr.json` 保存源文件 SHA-256、OCR 配置指纹和任务状态。
+- 重跑时，源 PDF 和 OCR 配置没有变化的完整结果会跳过。
+- 未完成文档会复用已有页面检查点，只请求缺失页面。
+- 修改模型、提示词、渲染 DPI、图片格式或输出 token 上限后，配置指纹改变，旧结果不会被误判为当前结果。
+- 页面失败事件会追加到 `ocr_results/failures.jsonl`；命令最终以非零状态退出，但继续处理后续 PDF。
+
+处理单个 PDF 的页面默认最多并发 2 个请求。当前版本按 PDF 顺序处理，避免在大批量任务中瞬间放大
+上游请求量。`Ctrl+C` 中断后可以直接运行同一命令继续。
+
+OCR 结果和原始简历可能包含个人信息，因此 `resumes/` 与 `ocr_results/` 默认不会被 Git 跟踪。
+

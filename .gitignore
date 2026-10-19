@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+tmp/
+
+# Resumes and OCR output contain personal information.
+resumes/
+ocr_results/
+screening_results/
+
+resumes_zips
+STANDARD.md

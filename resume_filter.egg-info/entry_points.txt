@@ -1,0 +1,2 @@
+[console_scripts]
+resume-filter-ocr = resumefilter.cli:main

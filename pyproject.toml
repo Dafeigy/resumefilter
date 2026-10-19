@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resume-filter"
+version = "0.1.0"
+description = "Resumable resume OCR using SiliconFlow DeepSeek-OCR"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27,<1",
+    "PyMuPDF>=1.24,<2",
+    "python-dotenv>=1.0,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+resume-filter-ocr = "resumefilter.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["resumefilter*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
